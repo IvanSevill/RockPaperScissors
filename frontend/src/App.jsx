@@ -3,7 +3,7 @@ import { Hands } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 import './App.css';
 
-// Variable de entorno para el backend (Render o Localhost)
+// Variable de entorno para la direccion del backend conforme a las instrucciones guardadas
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function App() {
@@ -12,11 +12,11 @@ function App() {
   const cameraRef = useRef(null);
 
   const [playerGesture, setPlayerGesture] = useState('None');
-  const [status, setStatus] = useState('Initializing...');
+  const [status, setStatus] = useState('Ready for duel');
   const [leaderboard, setLeaderboard] = useState([]);
   const [playerName, setPlayerName] = useState('Ivan');
 
-  // 1. Memorizamos la función para evitar re-renders innecesarios
+  // 1. Funcion para obtener el ranking (memorizada para evitar renders infinitos)
   const fetchLeaderboard = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/leaderboard`);
@@ -29,22 +29,18 @@ function App() {
     }
   }, []);
 
-  // 2. SOLUCIÓN AL ERROR: Llamada asíncrona controlada
+  // 2. Carga inicial de datos asincrona para cumplir con las reglas de React
   useEffect(() => {
     let isMounted = true;
-
-    const loadInitialData = async () => {
+    const loadData = async () => {
       await fetchLeaderboard();
-      // Solo actualizamos si el componente sigue montado
       if (!isMounted) return;
     };
-
-    loadInitialData();
-
+    loadData();
     return () => { isMounted = false; };
   }, [fetchLeaderboard]);
 
-  // 3. Efecto para MediaPipe y Cámara
+  // 3. Inicializacion de MediaPipe y flujo de video
   useEffect(() => {
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
@@ -60,8 +56,6 @@ function App() {
     hands.onResults((results) => {
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         const landmarks = results.multiHandLandmarks[0];
-
-        // Lógica de detección: Piedra, Papel, Tijera
         const isIndexUp = landmarks[8].y < landmarks[6].y;
         const isMiddleUp = landmarks[12].y < landmarks[10].y;
         const isRingUp = landmarks[16].y < landmarks[14].y;
@@ -70,11 +64,9 @@ function App() {
         if (isIndexUp && isMiddleUp && isRingUp) gesture = "Paper";
         else if (isIndexUp && isMiddleUp) gesture = "Scissors";
 
-        setPlayerGesture((prev) => (prev !== gesture ? gesture : prev));
-        setStatus((prev) => (prev !== "Hand Detected" ? "Hand Detected" : prev));
+        setPlayerGesture(gesture);
       } else {
-        setPlayerGesture((prev) => (prev !== "None" ? "None" : prev));
-        setStatus((prev) => (prev !== "Show your hand" ? "Show your hand" : prev));
+        setPlayerGesture('None');
       }
     });
 
@@ -85,13 +77,16 @@ function App() {
             await handsRef.current.send({ image: videoRef.current });
           }
         },
-        width: 640,
-        height: 480,
+        width: 1280,
+        height: 720,
       });
 
       cameraRef.current.start()
         .then(() => setStatus("Camera Active"))
-        .catch(() => setStatus("Error: Camera access denied"));
+        .catch((err) => {
+          console.error(err);
+          setStatus("Camera Error: Access Denied");
+        });
     }
 
     handsRef.current = hands;
@@ -102,47 +97,80 @@ function App() {
     };
   }, []);
 
-  const updateScore = async (points) => {
+  // 4. Enviar puntuacion al backend
+  const updateScore = async () => {
     try {
       const response = await fetch(`${API_URL}/score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: playerName, points: points }),
+        body: JSON.stringify({ name: playerName, points: 2 }),
       });
-      if (response.ok) fetchLeaderboard();
+      if (response.ok) {
+        fetchLeaderboard();
+      }
     } catch (error) {
-      console.error("Error updating score:", error);
+      console.error("Error saving score:", error);
     }
   };
 
   return (
     <div className="app-container">
-      <div className="glass-card">
-        <header>
-          <h1>RPS AI</h1>
-          <input
-            type="text"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-          />
-        </header>
-        <div className="main-content">
-          <div className="video-area">
-            <video ref={videoRef} playsInline muted autoPlay style={{ display: 'none' }} />
-            <div className="display-zone">
-              <div className="gesture-text">{playerGesture}</div>
+      <aside className="leaderboard-panel glass">
+        <h2>LEADERBOARD</h2>
+        <div className="leaderboard-list">
+          {leaderboard.map((entry, index) => (
+            <div key={index} className="leaderboard-item">
+              <span>{entry.name}</span>
+              <span>{entry.points}</span>
             </div>
-            <p className="status-label">{status}</p>
-          </div>
-          <aside className="ranking">
-            <h3>Leaderboard</h3>
-            {leaderboard.map((u, i) => (
-              <div key={i} className="row">{u.name}: {u.points}</div>
-            ))}
-          </aside>
+          ))}
         </div>
-        <button className="btn-action" onClick={() => updateScore(2)}>SHOOT!</button>
-      </div>
+      </aside>
+
+      <main className="main-game">
+        <div className="players-header">
+          <div className="player-box">
+            <label>PLAYER 1</label>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+            />
+          </div>
+          <div className="player-box">
+            <label>PLAYER 2</label>
+            <input type="text" value="Antonio" readOnly />
+          </div>
+        </div>
+
+        <div className="video-wrapper">
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            autoPlay
+            className="hidden-video"
+          />
+          <div className="gesture-display-main">{playerGesture}</div>
+
+          <div className="status-overlay-bottom">
+            <div className="player-status-card">
+              <span className="name-tag">{playerName}</span>
+              <span className="status-tag">WAITING</span>
+            </div>
+            <div className="player-status-card">
+              <span className="name-tag">Antonio</span>
+              <span className="status-tag">WAITING</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="game-status-text">{status}</p>
+
+        <button className="shoot-btn-main" onClick={updateScore}>
+          SHOOT
+        </button>
+      </main>
     </div>
   );
 }
