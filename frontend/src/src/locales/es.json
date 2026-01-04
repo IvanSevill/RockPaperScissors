@@ -1,0 +1,23 @@
+{
+  "lang_name": "Español",
+  "title": "Piedra, Papel o Tijera",
+  "ready": "¡Listo para el duelo!",
+  "getReady": "¡Prepárate!",
+  "waiting": "ESPERANDO",
+  "shoot": "¡YA!",
+  "prepare": "PREPARANDO...",
+  "wins": "GANA",
+  "tie": "¡Empate!",
+  "errorHands": "¡Muestra ambas manos!",
+  "leaderboard": "Clasificación",
+  "player": "Jugador",
+  "points": "Puntos",
+  "history": "Historial",
+  "lastMatches": "Últimas 25 partidas",
+  "language": "Idioma",
+  "camera": "Cámara",
+  "player1": "JUGADOR 1",
+  "player2": "JUGADOR 2",
+  "noMatches": "Sin partidas aún",
+  "winner": "Ganador"
+}

@@ -1,0 +1,23 @@
+{
+    "lang_name": "Deutsch",
+    "title": "Schere, Stein, Papier",
+    "ready": "Bereit für das Duell!",
+    "getReady": "Mach dich bereit!",
+    "waiting": "WARTEN",
+    "shoot": "LOS!",
+    "prepare": "VORBEREITUNG...",
+    "wins": "GEWINNT",
+    "tie": "Unentschieden!",
+    "errorHands": "Zeig beide Hände!",
+    "leaderboard": "Bestenliste",
+    "player": "Spieler",
+    "points": "PUNKTE",
+    "history": "Verlauf",
+    "lastMatches": "Letzte 25 Spiele",
+    "language": "Sprache",
+    "camera": "Kamera",
+    "player1": "SPIELER 1",
+    "player2": "SPIELER 2",
+    "noMatches": "Noch keine Spiele",
+    "winner": "Gewinner"
+}

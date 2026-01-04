@@ -1,0 +1,23 @@
+{
+  "lang_name": "English",
+  "title": "Rock, Paper, Scissors",
+  "ready": "Ready for duel!",
+  "getReady": "Get ready!",
+  "waiting": "WAITING",
+  "shoot": "SHOOT!",
+  "prepare": "PREPARING...",
+  "wins": "WINS",
+  "tie": "It's a tie!",
+  "errorHands": "Show both hands!",
+  "leaderboard": "Leaderboard",
+  "player": "Player",
+  "points": "Points",
+  "history": "History",
+  "lastMatches": "Last 25 matches",
+  "language": "Language",
+  "camera": "Camera",
+  "player1": "PLAYER 1",
+  "player2": "PLAYER 2",
+  "noMatches": "No matches yet",
+  "winner": "Winner"
+}

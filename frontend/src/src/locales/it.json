@@ -1,0 +1,23 @@
+{
+    "lang_name": "Italiano",
+    "title": "Sasso, Carta, Forbice",
+    "ready": "Pronto per il duello!",
+    "getReady": "Preparati!",
+    "waiting": "ATTESA",
+    "shoot": "VIA!",
+    "prepare": "PREPARAZIONE...",
+    "wins": "VINCE",
+    "tie": "Pareggio!",
+    "errorHands": "Mostra entrambe le mani!",
+    "leaderboard": "Classifica",
+    "player": "Giocatore",
+    "points": "PUNTI",
+    "history": "Cronologia",
+    "lastMatches": "Ultime 25 partite",
+    "language": "Lingua",
+    "camera": "Telecamera",
+    "player1": "GIOCATORE 1",
+    "player2": "GIOCATORE 2",
+    "noMatches": "Ancora nessuna partita",
+    "winner": "Vincitore"
+}

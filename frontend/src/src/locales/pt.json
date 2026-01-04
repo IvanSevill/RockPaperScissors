@@ -1,0 +1,23 @@
+{
+    "lang_name": "Português",
+    "title": "Pedra, Papel, Tesoura",
+    "ready": "Pronto para o duelo!",
+    "getReady": "Prepare-se!",
+    "waiting": "AGUARDANDO",
+    "shoot": "JÁ!",
+    "prepare": "PREPARANDO...",
+    "wins": "VENCE",
+    "tie": "Empate!",
+    "errorHands": "Mostre as duas mãos!",
+    "leaderboard": "Classificação",
+    "player": "Jogador",
+    "points": "PONTOS",
+    "history": "Histórico",
+    "lastMatches": "Últimas 25 partidas",
+    "language": "Idioma",
+    "camera": "Câmera",
+    "player1": "JOGADOR 1",
+    "player2": "JOGADOR 2",
+    "noMatches": "Nenhuma partida ainda",
+    "winner": "Vencedor"
+}

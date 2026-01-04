@@ -1,0 +1,23 @@
+{
+    "lang_name": "Français",
+    "title": "Pierre, Papier, Ciseaux",
+    "ready": "Prêt pour le duel !",
+    "getReady": "Préparez-vous !",
+    "waiting": "EN ATTENTE",
+    "shoot": "FEU !",
+    "prepare": "PRÉPARATION...",
+    "wins": "GAGNE",
+    "tie": "Égalité !",
+    "errorHands": "Montrez les deux mains !",
+    "leaderboard": "Classement",
+    "player": "Joueur",
+    "points": "POINTS",
+    "history": "Historique",
+    "lastMatches": "25 derniers matchs",
+    "language": "Langue",
+    "camera": "Caméra",
+    "player1": "JOUEUR 1",
+    "player2": "JOUEUR 2",
+    "noMatches": "Aucun match pour le moment",
+    "winner": "Vainqueur"
+}
