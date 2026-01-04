@@ -306,3 +306,16 @@ body {
   font-weight: 600;
   text-shadow: 0 0 10px rgba(0,216,255,0.4);
 }
+
+@media (max-width: 768px) {
+  body { overflow-y: auto; }
+  .app-container { height: auto; min-height: 100vh; padding: 10px; align-items: flex-start; }
+  .main-card { width: 100%; height: auto; margin-top: 20px; }
+  .main-layout { flex-direction: column; height: auto; }
+  .sidebar { width: 100%; order: 2; }
+  .glass-panel { height: 350px; }
+  .game-area { order: 1; width: 100%; }
+  .viewport { aspect-ratio: 9 / 16; height: 500px; }
+  .player-inputs { flex-direction: column; width: 100%; }
+  .shoot-btn { width: 100%; }
+}

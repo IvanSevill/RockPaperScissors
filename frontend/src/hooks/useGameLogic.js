@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Hands } from "@mediapipe/hands";
 import * as draw from "@mediapipe/drawing_utils";
 
-// Dirección de localhost desde .env
+// URL desde .env para respetar localhost
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export function useGameLogic(languages, langCode) {
@@ -32,7 +32,7 @@ export function useGameLogic(languages, langCode) {
       ]);
       if (lbRes.ok) setLeaderboard(await lbRes.json());
       if (histRes.ok) setHistory(await histRes.json());
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error("Error API:", error); }
   }, []);
 
   useEffect(() => {
@@ -51,16 +51,13 @@ export function useGameLogic(languages, langCode) {
 
   useEffect(() => {
     if (!selectedDevice || !videoRef.current) return;
-
-    // CAPTURA LOCAL DE REFS (Solución al error de ESLINT)
-    const currentVideo = videoRef.current; 
+    const currentVideo = videoRef.current; // Captura para cleanup seguro
     let activeStream = null;
     let isMounted = true;
 
     const hands = new Hands({ 
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` 
     });
-    
     hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.6 });
 
     hands.onResults((results) => {
@@ -88,40 +85,41 @@ export function useGameLogic(languages, langCode) {
         activeStream = await navigator.mediaDevices.getUserMedia({
           video: { deviceId: { exact: selectedDevice }, width: 1280, height: 720 }
         });
-        
-        // Usamos la variable local currentVideo en lugar de videoRef.current
         if (currentVideo && isMounted) {
           currentVideo.srcObject = activeStream;
           await currentVideo.play();
-          
           const processFrame = async () => {
-            if (currentVideo && currentVideo.readyState >= 2 && isMounted) {
-              await hands.send({ image: currentVideo });
-            }
+            if (currentVideo.readyState >= 2 && isMounted) await hands.send({ image: currentVideo });
             requestRef.current = requestAnimationFrame(processFrame);
           };
           processFrame();
         }
-      } catch (err) {
-        console.error("Error al iniciar stream:", err);
-      }
+      } catch (err) { console.error(err); }
     };
-
     startVideo();
 
     return () => {
       isMounted = false;
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
-      if (activeStream) {
-        activeStream.getTracks().forEach(track => track.stop());
-      }
-      // Usamos la variable local para limpiar de forma segura
-      if (currentVideo) {
-        currentVideo.pause();
-        currentVideo.srcObject = null;
-      }
+      if (activeStream) activeStream.getTracks().forEach(t => t.stop());
+      if (currentVideo) { currentVideo.pause(); currentVideo.srcObject = null; }
     };
   }, [selectedDevice]);
+
+  const startChallenge = () => {
+    let count = 3;
+    setCountdown(count);
+    setStatus(t.getReady);
+    const timer = setInterval(() => {
+      count--;
+      if (count > 0) setCountdown(count);
+      else {
+        clearInterval(timer);
+        setCountdown(null);
+        evaluateWinner();
+      }
+    }, 1000);
+  };
 
   const evaluateWinner = async () => {
     const g1 = gesturesRef.current.p1;
@@ -129,6 +127,7 @@ export function useGameLogic(languages, langCode) {
     setDisplayGestoP1(g1 === "WAITING" ? t.waiting : g1);
     setDisplayGestoP2(g2 === "WAITING" ? t.waiting : g2);
     if (g1 === "WAITING" || g2 === "WAITING") { setStatus(t.errorHands); return; }
+    
     let result = "Tie";
     if (g1 !== g2) {
       if ((g1 === "ROCK" && g2 === "SCISSORS") || (g1 === "PAPER" && g2 === "ROCK") || (g1 === "SCISSORS" && g2 === "PAPER")) result = p1Name;
@@ -145,18 +144,6 @@ export function useGameLogic(languages, langCode) {
     } catch (err) { console.error(err); }
   };
 
-  const startChallenge = () => {
-    let count = 3;
-    setCountdown(count);
-    setStatus(t.getReady);
-    const timer = setInterval(() => {
-      count--;
-      if (count > 0) setCountdown(count);
-      else { clearInterval(timer); setCountdown(null); evaluateWinner(); }
-    }, 1000);
-  };
-
-  // RETORNO: Los refs se pasan sin acceder a .current
   return {
     videoRef, canvasRef, devices, selectedDevice, setSelectedDevice,
     leaderboard, history, status, setStatus, countdown, t,

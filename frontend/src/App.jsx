@@ -17,25 +17,10 @@ export default function App() {
   });
 
   const {
-    videoRef,
-    canvasRef,
-    devices,
-    selectedDevice,
-    setSelectedDevice,
-    leaderboard,
-    history,
-    status,
-    setStatus,
-    countdown,
-    t,
-    p1Name,
-    setP1Name,
-    p2Name,
-    setP2Name,
-    displayGestoP1,
-    displayGestoP2,
-    startChallenge,
-    refreshData
+    videoRef, canvasRef, devices, selectedDevice, setSelectedDevice,
+    leaderboard, history, status, setStatus, countdown, t,
+    p1Name, setP1Name, p2Name, setP2Name,
+    displayGestoP1, displayGestoP2, startChallenge, refreshData
   } = useGameLogic(languages, langCode);
 
   useEffect(() => {
@@ -56,7 +41,7 @@ export default function App() {
                 setLangCode(e.target.value);
                 localStorage.setItem("rps_lang", e.target.value);
               }}>
-                {Object.keys(languages).map((code) => (
+                {Object.keys(languages).map(code => (
                   <option key={code} value={code}>{languages[code].lang_name || code.toUpperCase()}</option>
                 ))}
               </select>
@@ -71,7 +56,6 @@ export default function App() {
         )}
 
         <div className="main-layout">
-          {/* BARRA LATERAL (Clasificación e Historial) */}
           <aside className="sidebar">
             <div className="glass-panel" style={{ height: '40%' }}>
               <h3 className="lb-title">🏆 {t.leaderboard}</h3>
@@ -92,59 +76,33 @@ export default function App() {
             <div className="glass-panel" style={{ flex: 1 }}>
               <h3 className="lb-title">🕒 {t.lastMatches}</h3>
               <div className="scroll-area">
-                {history.length === 0 ? (
-                  <p style={{ color: '#555', fontSize: '0.8rem', textAlign: 'center' }}>{t.noMatches}</p>
-                ) : (
-                  history.map((match, i) => (
-                    <div key={i} className="history-card">
-                      <div style={{ fontSize: '0.75rem' }}>
-                        <strong>{match.player1}</strong> vs <strong>{match.player2}</strong>
-                      </div>
-                      <span className="winner-tag">
-                        {match.winner === "Tie" ? `🤝 ${t.tie}` : `🏆 ${t.winner}: ${match.winner}`}
-                      </span>
-                    </div>
-                  ))
-                )}
+                {history.map((match, i) => (
+                  <div key={i} className="history-card">
+                    <div style={{ fontSize: '0.75rem' }}><strong>{match.player1}</strong> vs <strong>{match.player2}</strong></div>
+                    <span className="winner-tag">{match.winner === "Tie" ? `🤝 ${t.tie}` : `🏆 ${t.winner}: ${match.winner}`}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </aside>
 
-          {/* AREA PRINCIPAL DE JUEGO */}
           <main className="game-area">
             <div className="player-inputs">
-              <div className="input-group">
-                <label>{t.player1}</label>
-                <input className="input-style" value={p1Name} onChange={e => setP1Name(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>{t.player2}</label>
-                <input className="input-style" value={p2Name} onChange={e => setP2Name(e.target.value)} />
-              </div>
+              <div className="input-group"><label>{t.player1}</label><input className="input-style" value={p1Name} onChange={e => setP1Name(e.target.value)} /></div>
+              <div className="input-group"><label>{t.player2}</label><input className="input-style" value={p2Name} onChange={e => setP2Name(e.target.value)} /></div>
             </div>
 
             <div className="viewport">
               <video ref={videoRef} style={{ display: 'none' }} muted playsInline />
               <canvas ref={canvasRef} width="1280" height="720" className="canvas-stream" />
-              
               {countdown && <div className="countdown-overlay">{countdown}</div>}
-              
-              <div className="player-badge left-badge">
-                <small>{p1Name}</small>
-                <div className="gesture-display">{displayGestoP1}</div>
-              </div>
-              
-              <div className="player-badge right-badge">
-                <small>{p2Name}</small>
-                <div className="gesture-display">{displayGestoP2}</div>
-              </div>
+              <div className="player-badge left-badge"><small>{p1Name}</small><div className="gesture-display">{displayGestoP1}</div></div>
+              <div className="player-badge right-badge"><small>{p2Name}</small><div className="gesture-display">{displayGestoP2}</div></div>
             </div>
 
             <div className="footer-status">
               <h2 className="status-msg">{status}</h2>
-              <button onClick={startChallenge} disabled={countdown !== null} className="shoot-btn">
-                {countdown ? t.prepare : t.shoot}
-              </button>
+              <button onClick={startChallenge} disabled={countdown !== null} className="shoot-btn">{countdown ? t.prepare : t.shoot}</button>
             </div>
           </main>
         </div>
@@ -152,3 +110,4 @@ export default function App() {
     </div>
   );
 }
+
