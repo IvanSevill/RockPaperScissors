@@ -3,45 +3,49 @@ import { Hands } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 import './App.css';
 
-// Usamos la variable de entorno que configuraste en Render
+// Variable de entorno para el backend (Render o Localhost)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function App() {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [playerGesture, setPlayerGesture] = useState('None');
-  const [status, setStatus] = useState('Waiting for camera...');
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [playerName, setPlayerName] = useState('Player 1');
+  const handsRef = useRef(null);
+  const cameraRef = useRef(null);
 
-  // Función para obtener el ranking del backend
+  const [playerGesture, setPlayerGesture] = useState('None');
+  const [status, setStatus] = useState('Initializing...');
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [playerName, setPlayerName] = useState('Ivan');
+
+  // 1. Memorizamos la función para evitar re-renders innecesarios
   const fetchLeaderboard = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/leaderboard`);
-      const data = await response.json();
-      setLeaderboard(data);
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data);
+      }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
     }
   }, []);
 
-  // Función para enviar puntuación
-  const updateScore = async (points) => {
-    try {
-      await fetch(`${API_URL}/score`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: playerName, points: points }),
-      });
-      fetchLeaderboard();
-    } catch (error) {
-      console.error("Error updating score:", error);
-    }
-  }, [playerName, fetchLeaderboard]);
-
+  // 2. SOLUCIÓN AL ERROR: Llamada asíncrona controlada
   useEffect(() => {
-    fetchLeaderboard();
+    let isMounted = true;
 
+    const loadInitialData = async () => {
+      await fetchLeaderboard();
+      // Solo actualizamos si el componente sigue montado
+      if (!isMounted) return;
+    };
+
+    loadInitialData();
+
+    return () => { isMounted = false; };
+  }, [fetchLeaderboard]);
+
+  // 3. Efecto para MediaPipe y Cámara
+  useEffect(() => {
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
     });
@@ -49,75 +53,96 @@ function App() {
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7,
     });
 
     hands.onResults((results) => {
-      // Lógica simplificada de detección de gestos
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        setStatus("Hand Detected!");
-        // Aquí iría tu lógica de contar dedos para Rock/Paper/Scissors
-        // Ejemplo simple: setPlayerGesture("Rock");
+        const landmarks = results.multiHandLandmarks[0];
+
+        // Lógica de detección: Piedra, Papel, Tijera
+        const isIndexUp = landmarks[8].y < landmarks[6].y;
+        const isMiddleUp = landmarks[12].y < landmarks[10].y;
+        const isRingUp = landmarks[16].y < landmarks[14].y;
+
+        let gesture = "Rock";
+        if (isIndexUp && isMiddleUp && isRingUp) gesture = "Paper";
+        else if (isIndexUp && isMiddleUp) gesture = "Scissors";
+
+        setPlayerGesture((prev) => (prev !== gesture ? gesture : prev));
+        setStatus((prev) => (prev !== "Hand Detected" ? "Hand Detected" : prev));
       } else {
-        setStatus("Show your hand to the camera");
-        setPlayerGesture("None");
+        setPlayerGesture((prev) => (prev !== "None" ? "None" : prev));
+        setStatus((prev) => (prev !== "Show your hand" ? "Show your hand" : prev));
       }
     });
 
     if (videoRef.current) {
-      const camera = new Camera(videoRef.current, {
+      cameraRef.current = new Camera(videoRef.current, {
         onFrame: async () => {
-          await hands.send({ image: videoRef.current });
+          if (handsRef.current) {
+            await handsRef.current.send({ image: videoRef.current });
+          }
         },
         width: 640,
         height: 480,
       });
 
-      camera.start()
+      cameraRef.current.start()
         .then(() => setStatus("Camera Active"))
-        .catch((err) => setStatus("Camera Error: Please allow access"));
+        .catch(() => setStatus("Error: Camera access denied"));
     }
-  }, [fetchLeaderboard]);
+
+    handsRef.current = hands;
+
+    return () => {
+      if (cameraRef.current) cameraRef.current.stop();
+      if (handsRef.current) handsRef.current.close();
+    };
+  }, []);
+
+  const updateScore = async (points) => {
+    try {
+      const response = await fetch(`${API_URL}/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playerName, points: points }),
+      });
+      if (response.ok) fetchLeaderboard();
+    } catch (error) {
+      console.error("Error updating score:", error);
+    }
+  };
 
   return (
     <div className="app-container">
-      <header className="glass-header">
-        <h1>AI Rock Paper Scissors</h1>
-        <input
-          type="text"
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          placeholder="Enter Name"
-        />
-      </header>
-
-      <main className="game-area">
-        <div className="video-wrapper">
-          <video ref={videoRef} playsInline muted autoPlay style={{ display: 'none' }} />
-          <canvas ref={canvasRef} className="game-canvas" />
-          <div className="gesture-badge">{playerGesture}</div>
-          <div className="status-indicator">{status}</div>
-        </div>
-
-        <aside className="leaderboard-panel glass">
-          <h2>Top Players</h2>
-          <ul>
-            {leaderboard.map((entry, index) => (
-              <li key={index}>
-                <span>{entry.name}</span>
-                <span>{entry.points} pts</span>
-              </li>
+      <div className="glass-card">
+        <header>
+          <h1>RPS AI</h1>
+          <input
+            type="text"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+          />
+        </header>
+        <div className="main-content">
+          <div className="video-area">
+            <video ref={videoRef} playsInline muted autoPlay style={{ display: 'none' }} />
+            <div className="display-zone">
+              <div className="gesture-text">{playerGesture}</div>
+            </div>
+            <p className="status-label">{status}</p>
+          </div>
+          <aside className="ranking">
+            <h3>Leaderboard</h3>
+            {leaderboard.map((u, i) => (
+              <div key={i} className="row">{u.name}: {u.points}</div>
             ))}
-          </ul>
-        </aside>
-      </main>
-
-      <footer className="controls">
-        <button className="shoot-btn" onClick={() => updateScore(2)}>
-          SHOOT!
-        </button>
-      </footer>
+          </aside>
+        </div>
+        <button className="btn-action" onClick={() => updateScore(2)}>SHOOT!</button>
+      </div>
     </div>
   );
 }
